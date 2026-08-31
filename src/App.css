@@ -81,3 +81,7 @@ body > div{max-width:var(--max-width);margin:0 auto;padding:20px}
 }
 
 a{color:var(--accent);text-decoration:none}
+
+.world-canvas{
+  border: 1px solid;
+}

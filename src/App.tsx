@@ -63,19 +63,46 @@ function App() {
     }
   }, [])
 
-async function assignHeroToArea(heroId: string, areaId: string) {
-  try {
-    await PartyApi.addHeroToAreaParty(heroId, areaId);
+  async function assignHeroToDungeon(heroId: string) {
+    try {
+      await PartyApi.addHeroToActiveParty(heroId);
 
-    const updatedParties = await PartyApi.getParties();
-    setParties(updatedParties);
-  } catch (err) {
-    console.error(
-      `Failed to assign hero ${heroId} to area ${areaId}`,
-      err
-    );
+      const updatedParties = await PartyApi.getParties();
+      setParties(updatedParties);
+    }
+    catch (err) {
+      console.error(`Failed to assign hero ${heroId} to dungeon`, err);
+    }
   }
-}
+  async function assignHeroToArea(heroId: string, areaId: string) {
+    try {
+      await PartyApi.addHeroToAreaParty(heroId, areaId);
+
+      const updatedParties = await PartyApi.getParties();
+      setParties(updatedParties);
+    } catch (err) {
+      console.error(
+        `Failed to assign hero ${heroId} to area ${areaId}`,
+        err
+      );
+    }
+  }
+
+  async function assignHeroToTown(heroId: string, areaId: string, state: string) {
+    try {
+      if (state === "DUNGEON") {
+        await PartyApi.removeHeroFromParty(heroId);
+      }
+      else {
+        await PartyApi.removeHeroFromAreaParty(heroId, areaId);
+      }
+
+      const updatedParties = await PartyApi.getParties();
+      setParties(updatedParties);
+    } catch (err) {
+      console.error(`Failed to assign hero ${heroId} to town`, err);
+    }
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -90,7 +117,7 @@ async function assignHeroToArea(heroId: string, areaId: string) {
 
     return () => clearInterval(interval)
   }, [])
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       WorldApi.getEvents()
@@ -107,17 +134,17 @@ async function assignHeroToArea(heroId: string, areaId: string) {
   return (
     <>
       <div className="app">
-      <HeroList heroes={heroes} areas={areas} activities={activities} onAssign={assignHeroToArea} />
+        <HeroList heroes={heroes} areas={areas} activities={activities} onAssign={assignHeroToArea} onDungeonAssign={assignHeroToDungeon} onTownAssign={assignHeroToTown} />
 
-      <PartyList parties={parties} areas={areas} />
+        <PartyList parties={parties} areas={areas} />
 
-      <AreaList areas={areas} />
+        <AreaList areas={areas} />
 
-      <WorldCanvas heroes={heroes} areas={areas} activities={activities} />
+        <WorldCanvas heroes={heroes} areas={areas} activities={activities} />
 
-      <WorldEvents events={events} heroes={heroes} />
+        <WorldEvents events={events} heroes={heroes} />
       </div>
-    
+
     </>
   )
 }

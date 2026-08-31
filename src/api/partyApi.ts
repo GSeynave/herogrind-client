@@ -49,3 +49,29 @@ export async function addHeroToActiveParty(heroId: string): Promise<Party> {
 
     return response.json();
 }
+
+export async function removeHeroFromParty(heroId: string): Promise<void> {
+    const response = await fetch(
+        `http://localhost:8080/parties/active/members/${heroId}`,
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(`Failed to remove hero from active party: ${response.status}`);
+    }
+}
+
+export async function removeHeroFromAreaParty(heroId: string, areaId: string): Promise<void> {
+    const response = await fetch(
+        `http://localhost:8080/parties/areas/${areaId}/members/${heroId}`,
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(`Failed to remove hero from area ${areaId} party: ${response.status}`);
+    }
+}
