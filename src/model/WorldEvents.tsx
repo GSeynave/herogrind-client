@@ -4,15 +4,15 @@ import type { HeroDetails } from "../model/HeroDetails";
 
 function WorldEvents({ events, heroes }: { events: WorldEvent[], heroes: HeroDetails[] }) {
     const combatEventTypes: WorldEventType[] = ["COMBAT_ACTION", "HERO_STARTED_ENCOUNTER", "HERO_FINISHED_ENCOUNTER"];
-    const combatEvents = events.filter(e => combatEventTypes.includes(e.eventType));
-    const worldEvents = events.filter(e => !combatEventTypes.includes(e.eventType));
+    const combatEvents = events.filter(e => combatEventTypes.includes(e.type));
+    const worldEvents = events.filter(e => !combatEventTypes.includes(e.type));
     function getHeroName(heroId: string): string {
         const hero = heroes.find(h => h.id === heroId);
         return hero ? hero.name : "Unknown Hero";
     }
 
     function getEventLabel(event: WorldEvent): string {
-        switch (event.eventType) {
+        switch (event.type) {
             case "COMBAT_ACTION":
                 return `Combat action by ${getHeroName(event.payload.sourceId)} on ${getHeroName(event.payload.targetId)}. Target health: ${event.payload.targetHealth}`;
             case "HERO_STARTED_ENCOUNTER":
@@ -26,34 +26,21 @@ function WorldEvents({ events, heroes }: { events: WorldEvent[], heroes: HeroDet
             case "HERO_STARTED_ROAMING":
                 return `${getHeroName(event.payload.heroId)} started roaming
     in area ${event.payload.areaId}`;
-
+            
             default:
-                return `Unknown event type`;
+                return `Unknown event type: ${event.type}`;
         }
     }
     return (
         <div className="WorldEvents">
             <div className="section-title">World Events :</div>
-
-            {worldEvents.map((e, index) => (
-                <div
-                    key={`${e.occurredAt}-${index}`}
-                    className="event-item"
-                >
-                    {getEventLabel(e)}
-                </div>
-            ))}
-
-            <div className="section-title">Combat Events :</div>
-
-            {combatEvents.map((e, index) => (
-                <div
-                    key={`${e.occurredAt}-${index}`}
-                    className="event-item"
-                >
-                    {getEventLabel(e)}
-                </div>
-            ))}
+            {events.length > 0 ? (
+                combatEvents.map((e) => (
+                    <div key={e.occurredAt} className="event-item"> {getEventLabel(e)}</div>
+                ))
+            ) : (
+                'Loading...'
+            )}
         </div>
     );
 }

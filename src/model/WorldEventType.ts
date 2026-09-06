@@ -1,0 +1,8 @@
+
+export type WorldEventType =
+    | 'HERO_IDLE'
+    | 'HERO_ENTERED_DUNGEON'
+    | 'HERO_STARTED_ROAMING'
+    | 'HERO_STARTED_ENCOUNTER'
+    | 'HERO_FINISHED_ENCOUNTER'
+    | 'COMBAT_ACTION';
