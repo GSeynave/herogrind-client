@@ -9,13 +9,15 @@ import PartyList from './components/PartyList'
 import AreaList from './components/AreaList'
 import WorldEvents from './components/WorldEvents'
 import WorldCanvas from './components/WorldCanvas'
+import type { WorldEvent } from './model/WorldEvent'
 
 function App() {
   const [heroes, setHeroes] = useState<any[]>([])
   const [areas, setAreas] = useState<any[]>([])
   const [parties, setParties] = useState<any[]>([])
   const [activities, setActivities] = useState<any[]>([])
-  const [events, setEvents] = useState<any[]>([])
+  const [events, setEvents] = useState<WorldEvent[]>([])
+
 
   useEffect(() => {
     let mounted = true
@@ -41,15 +43,6 @@ function App() {
       .catch(err => {
         console.error('Failed to load parties', err)
       })
-
-    WorldApi.getEvents()
-      .then(data => {
-        if (mounted) setEvents(prev => [...prev, ...data])
-      })
-      .catch(err => {
-        console.error('Failed to load events', err)
-      })
-
 
     AreasApi.getAreas()
       .then(data => {
@@ -122,6 +115,8 @@ function App() {
     const interval = setInterval(() => {
       WorldApi.getEvents()
         .then(data => {
+          if (data.length === 0) return;
+          data.sort((a, b) => a.occurredAt - b.occurredAt)
           setEvents(prev => [...prev, ...data])
         })
         .catch(err => {
@@ -140,7 +135,7 @@ function App() {
 
         <AreaList areas={areas} />
 
-        <WorldCanvas heroes={heroes} areas={areas} activities={activities} />
+        <WorldCanvas heroes={heroes} areas={areas} activities={activities} events={events} />
 
         <WorldEvents events={events} heroes={heroes} />
       </div>

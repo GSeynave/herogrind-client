@@ -1,4 +1,5 @@
 import type { HeroActivity } from "../model/HeroActivity";
+import type { WorldEvent } from "../model/WorldEvent";
 
 export async function getHeroActivities(): Promise<HeroActivity[]> {
     const response = await fetch(
@@ -15,7 +16,7 @@ export async function getHeroActivities(): Promise<HeroActivity[]> {
     return response.json();
 }
 
-export async function getEvents(): Promise<Event[]> {
+export async function getEvents(): Promise<WorldEvent[]> {
     const response = await fetch(
         "http://localhost:8080/world/events",
         {
