@@ -156,6 +156,7 @@ function App() {
           areas={areas}
           activities={activities}
           events={events}
+          monsters={monsters}
         />
 
         <WorldEvents events={events} heroes={heroes} monsters={monsters} />
