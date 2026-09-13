@@ -1,17 +1,14 @@
 import { useEffect, useRef } from "react";
 import type { HeroActivity } from "../model/HeroActivity";
 import type { HeroDetails } from "../model/HeroDetails";
-import {
-  areaConfig,
-  heroConfig,
-  townConfig,
-  worldCanvasConfig,
-} from "../config/worldCanvasConfig";
+import { worldCanvasConfig, heroConfig } from "../config/worldCanvasConfig";
 import type { Area } from "../model/Area";
 import type { WorldEvent } from "../model/WorldEvent";
 import type { FloatingDamage } from "../model/FloatingDamage";
 import type { ActorPosition } from "../model/ActorPosition";
 import type { Monster } from "../model/Monster";
+import type { AreaPosition } from "../model/AreaPosition";
+import type { AreaSize } from "../model/AreaSize";
 
 function WorldCanvas({
   heroes,
@@ -76,7 +73,6 @@ function WorldCanvas({
 
       actorPositionsRef.current.clear();
 
-      drawTown(ctx);
       drawHeroesInTown(ctx);
       drawAreas(ctx);
       drawFloatingDamages(ctx);
@@ -126,89 +122,58 @@ function WorldCanvas({
     processedEventsCountRef.current += newEvents.length;
   }, [events]);
 
-  function drawTown(ctx: CanvasRenderingContext2D) {
-    ctx.strokeRect(
-      worldCanvasConfig.margin,
-      worldCanvasConfig.margin,
-      townConfig.width,
-      townConfig.height,
-    );
-
-    const townCenter = {
-      x: worldCanvasConfig.margin + townConfig.width / 2,
-      y: worldCanvasConfig.margin + townConfig.height / 2,
-    };
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Town", townCenter.x, townCenter.y);
-    ctx.stroke();
-  }
-
   function drawHeroesInTown(ctx: CanvasRenderingContext2D) {
+    const town = getTown(areasRef.current);
+    if (!town) return;
+    const townCanvasPosition = getAreaCanvasPosition(town.position);
     const idleHeroes = heroesRef.current.filter(
       (h) => getHeroActivity(h.id)?.state === "IDLE",
     );
-    if (idleHeroes.length === 0) return;
 
     idleHeroes.forEach((h, index) => {
-      drawHero(
-        h,
-        { x: worldCanvasConfig.margin, y: worldCanvasConfig.margin },
-        index,
-        ctx,
-      );
+      drawHero(h, townCanvasPosition, town.size, index, ctx);
     });
   }
+
+  function getTown(areas: Area[]): Area | undefined {
+    return areas.find((a) => a.name === "Town");
+  }
+
   function drawAreas(ctx: CanvasRenderingContext2D) {
     areasRef.current.forEach((area, index) => {
-      const areaPosition = getAreaPositions(index);
+      const areaPosition = getAreaCanvasPosition(area.position);
+      const width = worldCanvasConfig.cellSize * area.size.width;
+      const height = worldCanvasConfig.cellSize * area.size.height;
       const areaCenter = {
-        x: areaPosition.x + areaConfig.width / 2,
-        y: areaPosition.y + areaConfig.height / 2,
+        x: areaPosition.x + width / 2,
+        y: areaPosition.y + height / 2,
       };
-      ctx.strokeRect(
-        areaPosition.x,
-        areaPosition.y,
-        areaConfig.width,
-        areaConfig.height,
-      );
-      ctx.fillText(index + " - " + area.name, areaCenter.x, areaCenter.y);
+      ctx.strokeRect(areaPosition.x, areaPosition.y, width, height);
+      ctx.fillText(area.name, areaCenter.x, areaCenter.y);
 
       drawHeroesInArea(ctx, area, areaPosition);
     });
   }
 
-  function getAreaPositions(index: number): { x: number; y: number } {
-    if (index % 2 == 0) {
-      const x =
-        worldCanvasConfig.margin + townConfig.width + worldCanvasConfig.gap;
-      const y =
-        worldCanvasConfig.margin +
-        (index > 0
-          ? (index - 1) * (areaConfig.height + worldCanvasConfig.gap)
-          : 0);
-      return { x, y };
-    } else {
-      const x = worldCanvasConfig.margin;
-      const y =
-        worldCanvasConfig.margin + townConfig.height + worldCanvasConfig.gap;
-      return { x, y };
-    }
+  function getAreaCanvasPosition(areaPosition: AreaPosition): ActorPosition {
+    const x =
+      worldCanvasConfig.margin + areaPosition.x * worldCanvasConfig.cellSize;
+    const y =
+      worldCanvasConfig.margin + areaPosition.y * worldCanvasConfig.cellSize;
+    return { x, y };
   }
 
   function drawHeroesInArea(
     ctx: CanvasRenderingContext2D,
     area: Area,
-    areaPosition: { x: number; y: number },
+    canvasPosition: ActorPosition,
   ) {
     const heroesInArea = heroesRef.current.filter(
       (h) => getHeroActivity(h.id)?.areaId === area.id,
     );
 
-    if (heroesInArea.length === 0) return;
-
     heroesInArea.forEach((h, index) => {
-      const heroPosition = drawHero(h, areaPosition, index, ctx);
+      const heroPosition = drawHero(h, canvasPosition, area.size, index, ctx);
 
       const encounter = getEncounterVisual(h.id);
       if (!encounter) return;
@@ -249,13 +214,17 @@ function WorldCanvas({
 
   function drawHero(
     h: HeroDetails,
-    areaPosition: { x: number; y: number },
+    areaPosition: ActorPosition,
+    areaSize: AreaSize,
     index: number,
     ctx: CanvasRenderingContext2D,
   ): ActorPosition {
     const heroText = `${h.name}`;
     const heroX = areaPosition.x + heroConfig.margin + index * heroConfig.gap;
-    const heroY = areaPosition.y + (areaConfig.height - heroConfig.margin);
+    const heroY =
+      areaPosition.y +
+      areaSize.height * worldCanvasConfig.cellSize -
+      heroConfig.margin;
     const position: ActorPosition = { x: heroX, y: heroY };
     actorPositionsRef.current.set(h.id, position);
     ctx.beginPath();
