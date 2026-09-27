@@ -73,8 +73,8 @@ function WorldCanvas({
 
       actorPositionsRef.current.clear();
 
-      drawHeroesInTown(ctx);
       drawAreas(ctx);
+      drawHeroesInTown(ctx);
       drawFloatingDamages(ctx);
 
       animationFrameId = requestAnimationFrame(render);
