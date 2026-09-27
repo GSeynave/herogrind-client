@@ -5,5 +5,7 @@ export type HeroState =
   | "RESTING"
   | "DUNGEON"
   | "DYING"
-  | "DEAD";
-
+  | "DEAD"
+  | "GHOST_WAITING"
+  | "GHOST_TRAVELING"
+  | "GHOST_RESURRECTING";

@@ -1,4 +1,5 @@
 export type ActorPosition = {
-    x: number;
-    y: number;
-}
+  x: number;
+  y: number;
+};
+

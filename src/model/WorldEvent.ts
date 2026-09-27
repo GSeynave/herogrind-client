@@ -1,4 +1,7 @@
 import type { CombatActionEvent } from "./CombatActionEvent";
+import type { GhostResurrectingEvent } from "./GhostResurrectingEvent";
+import type { GhostTravelingEvent } from "./GhostTravelingEvent";
+import type { GhostWaitingEvent } from "./GhostWaitingEvent";
 import type { HeroEnteredDungeonEvent } from "./HeroEnteredDungeonEvent";
 import type { HeroIdleEvent } from "./HeroIdleEvent";
 import type { HeroStartedEncounterEvent } from "./HeroStartedEncounterEvent";
@@ -11,5 +14,7 @@ export type WorldEvent =
   | HeroStartedEncounterEvent
   | HeroFinishedEncounterEvent
   | HeroEnteredDungeonEvent
-  | HeroIdleEvent;
-
+  | HeroIdleEvent
+  | GhostResurrectingEvent
+  | GhostTravelingEvent
+  | GhostWaitingEvent;
