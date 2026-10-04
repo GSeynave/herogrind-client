@@ -25,7 +25,6 @@ export function resolveHeroPositions(
   // NEW
   heroes.forEach((h) => {
     const activity = getHeroActivity(h.id, activities);
-    console.log(`Hero ${h.id} activity:`, activity);
     if (!activity) {
       console.warn(`No activity found for hero ${h.id}`);
       return;

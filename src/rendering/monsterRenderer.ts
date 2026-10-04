@@ -12,9 +12,12 @@ export function drawMonsters(
   if (actorPositions.size === 0) return;
 
   monsters.forEach((m) => {
-    // for now monster that are not in an encounter will not be drawn
+    console.log(`Encounters: ${JSON.stringify(encounters)}`);
     const encounter = encounters.find((e) => e.monsterId === m.id);
     if (encounter) {
+      console.log(
+        `Monster ${m.name} is in encounter with hero ${encounter.heroId}`,
+      );
       const actorPosition = actorPositions.get(encounter.heroId);
       if (!actorPosition) return;
       actorPositions.set(m.id, drawMonsterInCanvas(ctx, m, actorPosition));
