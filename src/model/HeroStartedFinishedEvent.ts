@@ -1,7 +1,8 @@
-import type { HeroActivityPayload } from "./HeroActivityPayload"
+import type { HeroActivityPayload } from "./HeroActivityPayload";
 
-export type HeroStartedFinishedEvent = {
-        eventType: "HERO_FINISHED_ENCOUNTER",
-        payload: HeroActivityPayload,
-        occurredAt: number,
-}
+export type HeroFinishedEncounterEvent = {
+  eventType: "HERO_FINISHED_ENCOUNTER";
+  payload: HeroActivityPayload;
+  occurredAt: number;
+};
+
