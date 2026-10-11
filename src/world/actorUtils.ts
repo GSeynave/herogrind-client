@@ -1,5 +1,5 @@
 import type { Area } from "../model/Area";
-import type { HeroActivity } from "../model/HeroActivity";
+import type { HeroActivityDto } from "../model/Hero/HeroActivityDto";
 import type { HeroDetails } from "../model/HeroDetails";
 import {
   getAreaById,
@@ -8,61 +8,46 @@ import {
   getAreaCanvasPosition,
   getAreaCanvasSize,
 } from "../world/areaUtils";
-import { getHeroActivity } from "../world/activityUtils";
 import type { ActorPosition } from "../model/ActorPosition";
 import { heroConfig } from "../config/worldCanvasConfig";
-import type { GhostActivityPayload } from "../model/GhostActivityPayload";
 import { calculateMovementProgress, interpolation } from "./movementUtils";
+import type { WorldState } from "../model/world/WorldState";
+import type { GhostDto } from "../model/Ghost/GhostDto";
 
 export function resolveHeroPositions(
   heroes: HeroDetails[],
   areas: Area[],
-  activities: HeroActivity[],
+  worldState: WorldState,
 ): Map<string, ActorPosition> {
   const heroByArea = new Map<string, number>();
   const actorPositions = new Map<string, ActorPosition>();
 
-  // NEW
-  heroes.forEach((h) => {
-    const activity = getHeroActivity(h.id, activities);
-    if (!activity) {
-      console.warn(`No activity found for hero ${h.id}`);
-      return;
-    }
-    switch (activity.state) {
-      case "GHOST_TRAVELING":
-        setPositionForGhostTraveling(activity, areas, actorPositions, h);
-        break;
-      case "GHOST_RESURRECTING":
-        setPositionForStaticGhost(areas, activity, actorPositions, h, "Town");
-        break;
-      case "GHOST_WAITING":
-        setPositionForStaticGhost(
-          areas,
-          activity,
-          actorPositions,
-          h,
-          "Graveyard",
-        );
-        break;
+  if (!worldState) {
+    console.warn("World state is undefined");
+    return actorPositions;
+  }
 
-      default:
-        setPositionForLivingHero(
-          areas,
-          activity,
-          actorPositions,
-          h,
-          heroByArea,
-        );
-        break;
-    }
-  });
+  if (worldState.heroActivities) {
+    worldState.heroActivities.forEach((activity) => {
+      const h = heroes.find((hero) => hero.id === activity.heroId);
+      if (!h) {
+        console.warn(`No hero found for activity ${activity.heroId}`);
+        return;
+      }
+      setPositionForLivingHero(areas, activity, actorPositions, h, heroByArea);
+    });
+  }
+  if (worldState.ghosts) {
+    worldState.ghosts.forEach((ghost) => {
+      setGhostPosition(ghost, areas, actorPositions);
+    });
+  }
   return actorPositions;
 }
 
 function setPositionForLivingHero(
   areas: Area[],
-  activity: HeroActivity,
+  activity: HeroActivityDto,
   actorPositions: Map<string, ActorPosition>,
   h: HeroDetails,
   heroByArea: Map<string, number>,
@@ -96,39 +81,32 @@ function setPositionForLivingHero(
   heroByArea.set(area.id, (heroByArea.get(area.id) || 0) + 1);
 }
 
-function setPositionForStaticGhost(
-  areas: Area[],
-  activity: HeroActivity,
-  actorPositions: Map<string, ActorPosition>,
-  h: HeroDetails,
-  areaName: string,
-) {
-  const currentArea = getAreaByName(areas, areaName);
-  if (currentArea) {
-    const resurrectionPosition = getAreaCanvasCenter(currentArea);
-    actorPositions.set(h.id, resurrectionPosition);
-  }
-}
-
-function setPositionForGhostTraveling(
-  activity: HeroActivity,
+function setGhostPosition(
+  ghost: GhostDto,
   areas: Area[],
   actorPositions: Map<string, ActorPosition>,
-  h: HeroDetails,
 ) {
-  const ghostTravelingPosition = getGhostTravelingPosition(activity, areas);
-  if (ghostTravelingPosition) {
-    actorPositions.set(h.id, ghostTravelingPosition);
+  if (ghost.travelDestinationId == null && ghost.currentAreaId != null) {
+    // Ghost is not traveling, place it in the current area
+    const currentArea = getAreaById(areas, ghost.currentAreaId);
+    if (currentArea) {
+      const resurrectionPosition = getAreaCanvasCenter(currentArea);
+      actorPositions.set(ghost.heroId, resurrectionPosition);
+    }
+  } else if (ghost.travelDestinationId != null && ghost.currentAreaId != null) {
+    const ghostTravelingPosition = getGhostTravelingPosition(ghost, areas);
+    if (ghostTravelingPosition) {
+      actorPositions.set(ghost.heroId, ghostTravelingPosition);
+    }
   }
 }
 
 function getGhostTravelingPosition(
-  activity: HeroActivity,
+  activity: GhostDto,
   areas: Area[],
 ): ActorPosition | undefined {
-  const ghostActivity = activity.payload as GhostActivityPayload;
-  const sourceArea = getAreaById(areas, ghostActivity.currentAreaId);
-  const targetArea = getAreaById(areas, ghostActivity.travelDestinationId);
+  const sourceArea = getAreaById(areas, activity.currentAreaId);
+  const targetArea = getAreaById(areas, activity.travelDestinationId);
   if (!sourceArea || !targetArea) return;
 
   const sourceCanvasCenterPosition = getAreaCanvasCenter(sourceArea);
@@ -136,7 +114,7 @@ function getGhostTravelingPosition(
 
   const progress = calculateMovementProgress(
     activity.startedAt,
-    ghostActivity.arrivalAt,
+    activity.arrivalAt,
     Date.now(),
   );
 
