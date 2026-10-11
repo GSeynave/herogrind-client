@@ -1,7 +1,7 @@
 import type { Area } from "../model/Area.ts";
 
 export async function getAreas(): Promise<Area[]> {
-  const response = await fetch("http://localhost:8080/areas", {
+  const response = await fetch("http://localhost:8080/v1/areas", {
     method: "GET",
   });
 

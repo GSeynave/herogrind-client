@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import type { HeroActivity } from "../model/HeroActivity";
 import type { HeroDetails } from "../model/HeroDetails";
 import type { Area } from "../model/Area";
 import type { WorldEvent } from "../model/WorldEvent";
@@ -13,24 +12,25 @@ import { drawFloatingDamages } from "../rendering/effectRenderer";
 import type { Encounter } from "../model/Encounter";
 import type { EncounterAcitivyPayload as EncounterActivyPayload } from "../model/EncounterActivityPayload";
 import type { GhostEvents } from "../model/GhostEvents";
+import type { WorldState } from "../model/world/WorldState";
 
 function WorldCanvas({
   heroes,
   areas,
-  activities,
+  worldState,
   events,
   monsters,
 }: {
   heroes: HeroDetails[];
   areas: Area[];
-  activities: HeroActivity[];
+  worldState: WorldState;
   events: WorldEvent[];
   monsters: Monster[];
 }) {
   const processedEventsCountRef = useRef(0);
   const floatingDamagesRef = useRef<FloatingDamage[]>([]);
   const heroesRef = useRef<HeroDetails[]>(heroes);
-  const activitiesRef = useRef<HeroActivity[]>(activities);
+  const worldStateRef = useRef<WorldState>(worldState);
   const areasRef = useRef<Area[]>(areas);
   const encounterVisualsRef = useRef<Encounter[]>([]);
   const monstersRef = useRef<Monster[]>(monsters);
@@ -41,8 +41,8 @@ function WorldCanvas({
   }, [heroes]);
 
   useEffect(() => {
-    activitiesRef.current = activities;
-  }, [activities]);
+    worldStateRef.current = worldState;
+  }, [worldState]);
 
   useEffect(() => {
     areasRef.current = areas;
@@ -70,7 +70,7 @@ function WorldCanvas({
       const actorPositions = resolveHeroPositions(
         heroesRef.current,
         areasRef.current,
-        activitiesRef.current,
+        worldStateRef.current,
       );
       // 1. Draw areas
       drawAreas(ctx, areasRef.current);
@@ -82,7 +82,7 @@ function WorldCanvas({
         ctx,
         monstersRef.current,
         actorPositions,
-        encounterVisualsRef.current,
+        worldStateRef?.current?.encounters,
       );
 
       // 4. Draw floating damages

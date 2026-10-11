@@ -1,8 +1,8 @@
-import type { HeroActivity } from "../model/HeroActivity";
+import type { HeroActivityDto } from "../model/Hero/HeroActivityDto";
 
 export function getHeroActivity(
   heroId: string,
-  activities: HeroActivity[],
-): HeroActivity | undefined {
-  return activities.find((a: HeroActivity) => a.heroId === heroId);
+  activities: HeroActivityDto[],
+): HeroActivityDto | undefined {
+  return activities.find((a: HeroActivityDto) => a.heroId === heroId);
 }

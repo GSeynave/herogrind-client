@@ -12,12 +12,13 @@ import WorldEvents from "./components/WorldEvents";
 import WorldCanvas from "./components/WorldCanvas";
 import type { WorldEvent } from "./model/WorldEvent";
 import type { Monster } from "./model/Monster";
+import type { WorldState } from "./model/world/WorldState";
 
 function App() {
   const [heroes, setHeroes] = useState<any[]>([]);
   const [areas, setAreas] = useState<any[]>([]);
   const [parties, setParties] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
+  const [worldState, setWorldState] = useState<WorldState>();
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [events, setEvents] = useState<WorldEvent[]>([]);
 
@@ -30,9 +31,9 @@ function App() {
       .catch((err) => {
         console.error("Failed to load heroes", err);
       });
-    WorldApi.getHeroActivities()
+    WorldApi.getWorldState()
       .then((data) => {
-        if (mounted) setActivities(data);
+        if (mounted) setWorldState(data);
       })
       .catch((err) => {
         console.error("Failed to load activities", err);
@@ -108,9 +109,9 @@ function App() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      WorldApi.getHeroActivities()
+      WorldApi.getWorldState()
         .then((data) => {
-          setActivities(data);
+          setWorldState(data);
         })
         .catch((err) => {
           console.error("Failed to load activities", err);
@@ -141,7 +142,7 @@ function App() {
         <HeroList
           heroes={heroes}
           areas={areas}
-          activities={activities}
+          activities={worldState?.heroActivities || []}
           onAssign={assignHeroToArea}
           onDungeonAssign={assignHeroToDungeon}
           onTownAssign={assignHeroToTown}
@@ -154,7 +155,7 @@ function App() {
         <WorldCanvas
           heroes={heroes}
           areas={areas}
-          activities={activities}
+          worldState={worldState!}
           events={events}
           monsters={monsters}
         />

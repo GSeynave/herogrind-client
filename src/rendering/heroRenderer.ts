@@ -28,5 +28,8 @@ function drawHeroInCanvas(
   ctx.arc(position.x, position.y, heroConfig.radius, 0, 2 * Math.PI);
   ctx.fill();
   ctx.fillText(heroText, position.x, position.y - heroConfig.radius - 5);
+
+  //FIXME : Health bar should be rendered in the worldCanvas using actorPosition and encounters.
+  //renderHealthBar(ctx, position, h.health, 0);
   return position;
 }
