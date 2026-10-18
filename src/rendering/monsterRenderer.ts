@@ -1,4 +1,5 @@
 import { heroConfig } from "../config/worldCanvasConfig";
+import { worldCanvasColors } from "../config/worldCanvasColors";
 import type { ActorPosition } from "../model/ActorPosition";
 import type { EncounterDto } from "../model/Encounter/EncounterDto";
 import type { Monster } from "../model/Monster";
@@ -38,21 +39,25 @@ function drawMonsterInCanvas(
   const monsterX = actorPosition.x + 60;
   const monsterY = actorPosition.y;
 
+  ctx.save();
+  ctx.strokeStyle = worldCanvasColors.monster.border;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  // monster circle
   ctx.arc(monsterX, monsterY, heroConfig.radius, 0, 2 * Math.PI);
   ctx.stroke();
 
-  // monster name
+  ctx.fillStyle = worldCanvasColors.monster.label;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillText(monster.name, monsterX, monsterY - heroConfig.radius - 5);
 
-  // monster health bar
   renderHealthBar(
     ctx,
     { x: monsterX, y: monsterY },
     monster.health,
     monsterHealth,
   );
+  ctx.restore();
 
   return { x: monsterX, y: monsterY };
 }

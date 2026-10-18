@@ -1,6 +1,7 @@
 import type { HeroDetails } from "../model/HeroDetails";
 import type { ActorPosition } from "../model/ActorPosition";
 import { heroConfig } from "../config/worldCanvasConfig";
+import { worldCanvasColors } from "../config/worldCanvasColors";
 
 export function drawHeroes(
   ctx: CanvasRenderingContext2D,
@@ -23,13 +24,19 @@ function drawHeroInCanvas(
   position: ActorPosition,
 ): ActorPosition {
   const heroText = `${h.name}`;
-  //actorPositionsRef.current.set(h.id, position);
+  ctx.save();
+  ctx.fillStyle = worldCanvasColors.hero.fill;
+  ctx.strokeStyle = worldCanvasColors.hero.border;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(position.x, position.y, heroConfig.radius, 0, 2 * Math.PI);
   ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = worldCanvasColors.hero.label;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillText(heroText, position.x, position.y - heroConfig.radius - 5);
+  ctx.restore();
 
-  //FIXME : Health bar should be rendered in the worldCanvas using actorPosition and encounters.
-  //renderHealthBar(ctx, position, h.health, 0);
   return position;
 }

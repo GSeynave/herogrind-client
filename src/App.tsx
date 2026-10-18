@@ -5,10 +5,6 @@ import * as AreasApi from "./api/areaApi";
 import * as PartyApi from "./api/partyApi";
 import * as WorldApi from "./api/worldApi";
 import * as MonsterApi from "./api/monsterApi";
-import HeroList from "./components/HeroList";
-import PartyList from "./components/PartyList";
-import AreaList from "./components/AreaList";
-import WorldEvents from "./components/WorldEvents";
 import WorldCanvas from "./components/WorldCanvas";
 import type { WorldEvent } from "./model/WorldEvent";
 import type { Monster } from "./model/Monster";
@@ -145,32 +141,16 @@ function App() {
   return (
     <>
       <div className="app">
-        <HeroList
-          heroes={heroes}
-          areas={areas}
-          activities={worldState?.heroActivities || []}
-          onAssign={assignHeroToArea}
-          onDungeonAssign={assignHeroToDungeon}
-          onTownAssign={assignHeroToTown}
-        />
-
-        <PartyList parties={parties} areas={areas} />
-
-        <AreaList areas={areas} />
-
         <WorldCanvas
           heroes={heroes}
           areas={areas}
           worldState={worldState!}
           events={events}
           monsters={monsters}
-        />
-
-        <WorldEvents
-          events={events}
-          worldState={worldState}
-          heroes={heroes}
-          monsters={monsters}
+          parties={parties}
+          onAssign={assignHeroToArea}
+          onDungeonAssign={assignHeroToDungeon}
+          onTownAssign={assignHeroToTown}
         />
       </div>
     </>

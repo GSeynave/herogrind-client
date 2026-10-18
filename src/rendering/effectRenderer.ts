@@ -1,4 +1,5 @@
 import { heroConfig } from "../config/worldCanvasConfig";
+import { worldCanvasColors } from "../config/worldCanvasColors";
 import type { ActorPosition } from "../model/ActorPosition";
 import type { FloatingDamage } from "../model/FloatingDamage";
 
@@ -8,7 +9,11 @@ export function drawFloatingDamages(
   actorPositions: Map<string, ActorPosition>,
 ): FloatingDamage[] {
   const now = performance.now();
-  return floatingDamages.filter((damage) => {
+  ctx.save();
+  ctx.fillStyle = worldCanvasColors.floatingDamage;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  const activeDamages = floatingDamages.filter((damage) => {
     const elapsed = now - damage.startedAt;
     if (elapsed > 700) {
       return false;
@@ -27,6 +32,8 @@ export function drawFloatingDamages(
     }
     return true;
   });
+  ctx.restore();
+  return activeDamages;
 }
 
 function getActorPosition(

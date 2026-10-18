@@ -1,4 +1,5 @@
 import { heroConfig } from "../config/worldCanvasConfig";
+import { worldCanvasColors } from "../config/worldCanvasColors";
 import type { ActorPosition } from "../model/ActorPosition";
 
 export function renderHealthBar(
@@ -16,14 +17,14 @@ export function renderHealthBar(
   const healthBarWidth = 40;
   const healthBarHeight = 5;
   const healthPercentage = currentHealth / maxHealth;
-  ctx.fillStyle = "red";
+  ctx.fillStyle = worldCanvasColors.monster.healthEmpty;
   ctx.fillRect(
     x - healthBarWidth / 2,
     y + heroConfig.radius + 5,
     healthBarWidth,
     healthBarHeight,
   );
-  ctx.fillStyle = "green";
+  ctx.fillStyle = worldCanvasColors.monster.healthFull;
   ctx.fillRect(
     x - healthBarWidth / 2,
     y + heroConfig.radius + 5,
