@@ -13,11 +13,14 @@ import WorldCanvas from "./components/WorldCanvas";
 import type { WorldEvent } from "./model/WorldEvent";
 import type { Monster } from "./model/Monster";
 import type { WorldState } from "./model/world/WorldState";
+import type { HeroDetails } from "./model/HeroDetails";
+import type { Area } from "./model/Area";
+import type { Party } from "./model/Party";
 
 function App() {
-  const [heroes, setHeroes] = useState<any[]>([]);
-  const [areas, setAreas] = useState<any[]>([]);
-  const [parties, setParties] = useState<any[]>([]);
+  const [heroes, setHeroes] = useState<HeroDetails[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [parties, setParties] = useState<Party[]>([]);
   const [worldState, setWorldState] = useState<WorldState>();
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [events, setEvents] = useState<WorldEvent[]>([]);
@@ -90,13 +93,16 @@ function App() {
 
   async function assignHeroToTown(
     heroId: string,
-    areaId: string,
+    areaId: string | undefined,
     state: string,
   ) {
     try {
       if (state === "DUNGEON") {
         await PartyApi.removeHeroFromParty(heroId);
       } else {
+        if (!areaId) {
+          throw new Error(`No area assignment found for hero ${heroId}`);
+        }
         await PartyApi.removeHeroFromAreaParty(heroId, areaId);
       }
 
@@ -160,7 +166,12 @@ function App() {
           monsters={monsters}
         />
 
-        <WorldEvents events={events} heroes={heroes} monsters={monsters} />
+        <WorldEvents
+          events={events}
+          worldState={worldState}
+          heroes={heroes}
+          monsters={monsters}
+        />
       </div>
     </>
   );

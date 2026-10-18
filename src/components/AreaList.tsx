@@ -1,4 +1,4 @@
-import type { Area } from "../model/AreaPosition";
+import type { Area } from "../model/Area";
 
 function AreaList({ areas }: { areas: Area[] }) {
   return (

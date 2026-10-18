@@ -9,9 +9,6 @@ import { resolveHeroPositions } from "../world/actorUtils";
 import { drawHeroes } from "../rendering/heroRenderer";
 import { drawMonsters } from "../rendering/monsterRenderer";
 import { drawFloatingDamages } from "../rendering/effectRenderer";
-import type { Encounter } from "../model/Encounter";
-import type { EncounterAcitivyPayload as EncounterActivyPayload } from "../model/EncounterActivityPayload";
-import type { GhostEvents } from "../model/GhostEvents";
 import type { WorldState } from "../model/world/WorldState";
 
 function WorldCanvas({
@@ -32,9 +29,7 @@ function WorldCanvas({
   const heroesRef = useRef<HeroDetails[]>(heroes);
   const worldStateRef = useRef<WorldState>(worldState);
   const areasRef = useRef<Area[]>(areas);
-  const encounterVisualsRef = useRef<Encounter[]>([]);
   const monstersRef = useRef<Monster[]>(monsters);
-  const ghostsRef = useRef<GhostEvents[]>([]);
 
   useEffect(() => {
     heroesRef.current = heroes;
@@ -106,42 +101,12 @@ function WorldCanvas({
     const newEvents = events.slice(processedEventsCountRef.current);
 
     newEvents.forEach((event) => {
-      switch (event.eventType) {
-        case "COMBAT_ACTION":
-          floatingDamagesRef.current.push({
-            targetId: event.payload.targetId,
-            value: event.payload.value,
-            startedAt: performance.now(),
-          });
-          break;
-        case "HERO_STARTED_ENCOUNTER":
-          var payload = event.payload as EncounterActivyPayload;
-          encounterVisualsRef.current.push({
-            encounterId: payload.encounterId,
-            heroId: payload.heroId,
-            monsterId: payload.enemyId,
-          });
-          break;
-        case "HERO_FINISHED_ENCOUNTER":
-          var payload = event.payload as EncounterActivyPayload;
-          encounterVisualsRef.current = encounterVisualsRef.current.filter(
-            (e) => e.heroId !== payload.heroId,
-          );
-          break;
-        case "GHOST_WAITING":
-        case "GHOST_TRAVELING":
-        case "GHOST_RESURRECTING":
-          heroesRef.current = heroesRef.current.filter(
-            (h) => h.id !== (event as GhostEvents).payload.heroId,
-          );
-          ghostsRef.current.push(event as GhostEvents);
-          break;
-        case "HERO_IDLE":
-        case "HERO_STARTED_ROAMING":
-        case "HERO_ENTERED_DUNGEON":
-          break;
-        default:
-          console.warn("Unknown event type", event.eventType);
+      if (event.eventType === "COMBAT_ACTION") {
+        floatingDamagesRef.current.push({
+          targetId: event.payload.targetId,
+          value: event.payload.value,
+          startedAt: performance.now(),
+        });
       }
     });
     processedEventsCountRef.current += newEvents.length;

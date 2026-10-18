@@ -1,5 +1,6 @@
-import type { HeroActivity } from "../model/HeroActivity";
+import type { Area } from "../model/Area";
 import type { HeroDetails } from "../model/HeroDetails";
+import type { HeroActivityDto } from "../model/Hero/HeroActivityDto";
 
 function HeroList({
   heroes,
@@ -10,14 +11,14 @@ function HeroList({
   onTownAssign,
 }: {
   heroes: HeroDetails[];
-  areas: any[];
-  activities: any[];
+  areas: Area[];
+  activities: HeroActivityDto[];
   onAssign: (heroId: string, areaId: string) => void;
   onDungeonAssign: (heroId: string) => void;
-  onTownAssign: (heroId: string, areaId: string, state: string) => void;
+  onTownAssign: (heroId: string, areaId: string | undefined, state: string) => void;
 }) {
-  function getHeroActivity(heroId: string): HeroActivity | undefined {
-    return activities.find((a: HeroActivity) => a.heroId == heroId);
+  function getHeroActivity(heroId: string): HeroActivityDto | undefined {
+    return activities.find((activity) => activity.heroId === heroId);
   }
 
   return (

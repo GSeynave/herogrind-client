@@ -1,20 +1,59 @@
-import type { CombatActionEvent } from "./CombatActionEvent";
-import type { GhostResurrectingEvent } from "./GhostResurrectingEvent";
-import type { GhostTravelingEvent } from "./GhostTravelingEvent";
-import type { GhostWaitingEvent } from "./GhostWaitingEvent";
-import type { HeroEnteredDungeonEvent } from "./HeroEnteredDungeonEvent";
-import type { HeroIdleEvent } from "./HeroIdleEvent";
-import type { HeroStartedEncounterEvent } from "./HeroStartedEncounterEvent";
-import type { HeroFinishedEncounterEvent } from "./HeroStartedFinishedEvent";
-import type { HeroStartedRoamingEvent } from "./HeroStartedRoamingEvent";
+type EventMetadata = {
+  occurredAt: number;
+};
+
+type HeroActivityPayload = {
+  heroId: string;
+  areaId: string;
+};
+
+type EncounterPayload = {
+  encounterId: string;
+  heroId: string;
+  heroHealth: number;
+  monsterId: string;
+  monsterHealth: number;
+};
+
+type GhostPayload = {
+  heroId: string;
+  areaId: string | null;
+  state: "TRAVELING" | "RESURRECTING" | "IDLE";
+  currentAreaId: string | null;
+  travelDestinationId: string | null;
+  arrivalAt: number | null;
+  resurrectionEndAt: number | null;
+};
 
 export type WorldEvent =
-  | CombatActionEvent
-  | HeroStartedRoamingEvent
-  | HeroStartedEncounterEvent
-  | HeroFinishedEncounterEvent
-  | HeroEnteredDungeonEvent
-  | HeroIdleEvent
-  | GhostResurrectingEvent
-  | GhostTravelingEvent
-  | GhostWaitingEvent;
+  | (EventMetadata & {
+      eventType:
+        | "HERO_IDLE"
+        | "HERO_ENTERED_DUNGEON"
+        | "HERO_STARTED_ROAMING"
+        | "HERO_DIED";
+      payload: HeroActivityPayload;
+    })
+  | (EventMetadata & {
+      eventType: "HERO_STARTED_ENCOUNTER" | "HERO_ENDED_ENCOUNTER";
+      payload: EncounterPayload;
+    })
+  | (EventMetadata & {
+      eventType: "COMBAT_ACTION";
+      payload: {
+        sourceId: string;
+        targetId: string;
+        targetHealth: number;
+        actionType: string;
+        value: number;
+      };
+    })
+  | (EventMetadata & {
+      eventType:
+        | "HERO_GHOST_RESURRECTING"
+        | "HERO_GHOST_TRAVELING"
+        | "HERO_RESURRECTED";
+      payload: GhostPayload;
+    });
+
+export type WorldEventType = WorldEvent["eventType"];

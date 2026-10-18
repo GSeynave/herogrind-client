@@ -1,27 +1,29 @@
 import type { WorldEvent } from "../model/WorldEvent";
-import type { WorldEventType } from "../model/WorldEventType";
 import type { HeroDetails } from "../model/HeroDetails";
 import type { Monster } from "../model/Monster";
-import { useEffect, useRef, useState } from "react";
-import type { CombatActionEvent } from "../model/CombatActionEvent";
-import type { HeroStartedEncounterEvent } from "../model/HeroStartedEncounterEvent";
+import type { WorldState } from "../model/world/WorldState";
 
 function WorldEvents({
   events,
+  worldState,
   heroes,
   monsters,
 }: {
   events: WorldEvent[];
+  worldState: WorldState | undefined;
   heroes: HeroDetails[];
   monsters: Monster[];
 }) {
-  const combatEventTypes: WorldEventType[] = [
-    "COMBAT_ACTION",
-    "HERO_STARTED_ENCOUNTER",
-    "HERO_FINISHED_ENCOUNTER",
-  ];
-  const combatEvents = events.filter((e) =>
-    combatEventTypes.includes(e.eventType),
+  const combatEvents = events.filter(
+    (event): event is Extract<WorldEvent, {
+      eventType:
+        | "COMBAT_ACTION"
+        | "HERO_STARTED_ENCOUNTER"
+        | "HERO_ENDED_ENCOUNTER";
+    }> =>
+      event.eventType === "COMBAT_ACTION" ||
+      event.eventType === "HERO_STARTED_ENCOUNTER" ||
+      event.eventType === "HERO_ENDED_ENCOUNTER",
   );
   function getActor(id: string): HeroDetails | Monster | "Unknown" {
     const hero = heroes.find((h) => h.id === id);
@@ -36,97 +38,14 @@ function WorldEvents({
     return actor.name;
   }
 
-  type Encounter = {
-    encounterId: string;
-    heroId: string;
-    heroHealth: number;
-    monsterId: string;
-    monsterHealth: number;
-  };
-  const processedEventCountRef = useRef(0);
-  const [encounters, setEncounters] = useState<Encounter[]>([]);
-
-  useEffect(() => {
-    const newEvents = events.slice(processedEventCountRef.current);
-
-    if (newEvents.length === 0) {
-      return;
-    }
-
-    setEncounters((previous) => {
-      let next = [...previous];
-
-      newEvents.forEach((event) => {
-        switch (event.eventType) {
-          case "HERO_STARTED_ENCOUNTER":
-            next = heroStartedEncounterHandling(next, event);
-            break;
-
-          case "COMBAT_ACTION":
-            next = combatActionHandling(next, event);
-            break;
-          case "HERO_FINISHED_ENCOUNTER":
-            next = next.filter((e) => e.heroId !== event.payload.heroId);
-            break;
-        }
-      });
-      return next;
-    });
-    processedEventCountRef.current = events.length;
-  }, [events]);
-
-  function heroStartedEncounterHandling(
-    next: Encounter[],
-    event: HeroStartedEncounterEvent,
-  ) {
-    return [
-      ...next,
-      {
-        encounterId: event.payload.encounterId,
-        heroId: event.payload.heroId,
-        heroHealth: event.payload.heroHealth,
-        monsterId: event.payload.monsterId,
-        monsterHealth: event.payload.monsterHealth,
-      },
-    ];
-  }
-
-  function combatActionHandling(next: Encounter[], event: CombatActionEvent) {
-    next = next.map((encounter) => {
-      if (
-        encounter.heroId !== event.payload.sourceId &&
-        encounter.heroId !== event.payload.targetId &&
-        encounter.monsterId !== event.payload.sourceId &&
-        encounter.monsterId !== event.payload.targetId
-      ) {
-        return encounter;
-      }
-      if (event.payload.targetId === encounter.heroId) {
-        return {
-          ...encounter,
-          heroHealth: event.payload.targetHealth,
-        };
-      }
-
-      if (event.payload.targetId === encounter.monsterId) {
-        return {
-          ...encounter,
-          monsterHealth: event.payload.targetHealth,
-        };
-      }
-      return encounter;
-    });
-    return next;
-  }
-
   function getEventLabel(event: WorldEvent): string {
     switch (event.eventType) {
       case "COMBAT_ACTION":
         return `Combat action by ${getName(event.payload.sourceId)} on ${getName(event.payload.targetId)}. Target health: ${event.payload.targetHealth}`;
       case "HERO_STARTED_ENCOUNTER":
         return `${getName(event.payload.heroId)} started an encounter against ${getName(event.payload.monsterId)}`;
-      case "HERO_FINISHED_ENCOUNTER":
-        return `${getName(event.payload.heroId)} finished an encounter in area ${event.payload.areaId}`;
+      case "HERO_ENDED_ENCOUNTER":
+        return `${getName(event.payload.heroId)} finished an encounter`;
       case "HERO_IDLE":
         return `${getName(event.payload.heroId)} is idle in area ${event.payload.areaId}`;
       case "HERO_ENTERED_DUNGEON":
@@ -134,9 +53,14 @@ function WorldEvents({
       case "HERO_STARTED_ROAMING":
         return `${getName(event.payload.heroId)} started roaming
     in area ${event.payload.areaId}`;
-
-      default:
-        return `Unknown event type`;
+      case "HERO_DIED":
+        return `${getName(event.payload.heroId)} died in area ${event.payload.areaId}`;
+      case "HERO_GHOST_TRAVELING":
+        return `${getName(event.payload.heroId)} is traveling as a ghost`;
+      case "HERO_GHOST_RESURRECTING":
+        return `${getName(event.payload.heroId)} is resurrecting`;
+      case "HERO_RESURRECTED":
+        return `${getName(event.payload.heroId)} was resurrected`;
     }
   }
 
@@ -144,13 +68,13 @@ function WorldEvents({
     <div className="WorldEvents">
       <div className="section-title">Combat Events :</div>
 
-      {encounters.map((encounter) => (
+      {worldState?.encounters.map((encounter) => (
         <div key={encounter.encounterId} className="encounter-item">
           <div>
             {getName(encounter.heroId)} (Health: {encounter.heroHealth})
           </div>
           <div>
-            {getName(encounter.monsterId)} (Health: {encounter.monsterHealth})
+              {getName(encounter.enemyId)} (Health: {encounter.enemyHealth})
           </div>
           )
         </div>

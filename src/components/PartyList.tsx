@@ -1,4 +1,4 @@
-import type { Area } from "../model/AreaPosition";
+import type { Area } from "../model/Area";
 import type { Party } from "../model/Party";
 
 function PartyList({ parties, areas }: { parties: Party[]; areas: Area[] }) {
