@@ -13,8 +13,9 @@ import { heroConfig } from "../config/worldCanvasConfig";
 import { calculateMovementProgress, interpolation } from "./movementUtils";
 import type { WorldState } from "../model/world/WorldState";
 import type { GhostDto } from "../model/Ghost/GhostDto";
+import type { WorldActorDto } from "../model/world/WorldActorDto";
 
-export function resolveHeroPositions(
+export function resolveActorPositions(
   heroes: HeroDetails[],
   areas: Area[],
   worldState: WorldState,
@@ -27,7 +28,11 @@ export function resolveHeroPositions(
     return actorPositions;
   }
 
-  if (worldState.heroActivities) {
+  if (worldState.actors?.length) {
+    worldState.actors.forEach((actor) => {
+      setPositionFromActorSnapshot(actor, areas, actorPositions);
+    });
+  } else if (worldState.heroActivities) {
     worldState.heroActivities.forEach((activity) => {
       const h = heroes.find((hero) => hero.id === activity.heroId);
       if (!h) {
@@ -43,6 +48,43 @@ export function resolveHeroPositions(
     });
   }
   return actorPositions;
+}
+
+export function interpolateActorPositions(
+  fromPositions: Map<string, ActorPosition>,
+  toPositions: Map<string, ActorPosition>,
+  progress: number,
+): Map<string, ActorPosition> {
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+  const interpolatedPositions = new Map<string, ActorPosition>();
+
+  toPositions.forEach((toPosition, actorId) => {
+    const fromPosition = fromPositions.get(actorId) ?? toPosition;
+    interpolatedPositions.set(actorId, {
+      x: interpolation(fromPosition.x, toPosition.x, clampedProgress),
+      y: interpolation(fromPosition.y, toPosition.y, clampedProgress),
+    });
+  });
+
+  return interpolatedPositions;
+}
+
+function setPositionFromActorSnapshot(
+  actor: WorldActorDto,
+  areas: Area[],
+  actorPositions: Map<string, ActorPosition>,
+) {
+  const area = getAreaById(areas, actor.areaId);
+  if (!area) {
+    console.warn(`No area found for actor ${actor.id}`);
+    return;
+  }
+  const areaPosition = getAreaCanvasPosition(area.position);
+  const areaSize = getAreaCanvasSize(area.size);
+  actorPositions.set(actor.id, {
+    x: areaPosition.x + areaSize.width * actor.positionX,
+    y: areaPosition.y + areaSize.height * actor.positionY,
+  });
 }
 
 function setPositionForLivingHero(

@@ -9,6 +9,8 @@ export const worldCanvasColors = {
     fill: "#38bdf8",
     border: "#e0f2fe",
     label: "#f8fafc",
+    healthEmpty: "#ef4444",
+    healthFull: "#22c55e",
   },
   monster: {
     border: "#fb7185",

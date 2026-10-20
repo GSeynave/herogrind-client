@@ -5,7 +5,10 @@ import type { WorldEvent } from "../model/WorldEvent";
 import type { FloatingDamage } from "../model/FloatingDamage";
 import type { Monster } from "../model/Monster";
 import { drawAreas } from "../rendering/areaRenderer";
-import { resolveHeroPositions } from "../world/actorUtils";
+import {
+  interpolateActorPositions,
+  resolveActorPositions,
+} from "../world/actorUtils";
 import { drawHeroes } from "../rendering/heroRenderer";
 import { drawMonsters } from "../rendering/monsterRenderer";
 import { drawFloatingDamages } from "../rendering/effectRenderer";
@@ -13,6 +16,7 @@ import type { WorldState } from "../model/world/WorldState";
 import type { Party } from "../model/Party";
 import type { CanvasPosition } from "../model/CanvasPosition";
 import type { CanvasSize } from "../model/CanvasSize";
+import type { ActorPosition } from "../model/ActorPosition";
 import type { CanvasMenuButton, CanvasPanel } from "../model/CanvasMenu";
 import {
   clampCamera,
@@ -24,11 +28,18 @@ import { drawCanvasMenu } from "../rendering/canvasMenuRenderer";
 import { getCanvasMenuPanelAtPosition } from "../world/canvasMenuUtils";
 import WorldOverlay from "./WorldOverlay";
 import { worldCanvasColors } from "../config/worldCanvasColors";
+import { worldCanvasConfig } from "../config/worldCanvasConfig";
 
 type CameraDrag = {
   pointerId: number;
   startScreenPosition: CanvasPosition;
   startCameraPosition: CanvasPosition;
+};
+
+type ActorPositionTransition = {
+  from: Map<string, ActorPosition>;
+  to: Map<string, ActorPosition>;
+  startedAt: number;
 };
 
 function WorldCanvas({
@@ -68,6 +79,11 @@ function WorldCanvas({
   const menuButtonsRef = useRef<CanvasMenuButton[]>([]);
   const viewportRef = useRef<CanvasSize>({ width: 0, height: 0 });
   const cameraDragRef = useRef<CameraDrag | undefined>(undefined);
+  const actorPositionTransitionRef = useRef<ActorPositionTransition>({
+    from: new Map(),
+    to: new Map(),
+    startedAt: 0,
+  });
   const hasInitialCameraPositionRef = useRef(false);
   const [viewport, setViewport] = useState<CanvasSize>({ width: 0, height: 0 });
   const [activePanel, setActivePanel] = useState<CanvasPanel>();
@@ -87,6 +103,23 @@ function WorldCanvas({
   useEffect(() => {
     monstersRef.current = monsters;
   }, [monsters]);
+
+  useEffect(() => {
+    const transition = actorPositionTransitionRef.current;
+    const progress = Math.min(
+      1,
+      (performance.now() - transition.startedAt)
+        / worldCanvasConfig.actorPositionTransitionDurationMillis,
+    );
+    const nextPositions = resolveActorPositions(heroes, areas, worldState);
+    actorPositionTransitionRef.current = {
+      from: transition.to.size === 0
+        ? nextPositions
+        : interpolateActorPositions(transition.from, transition.to, progress),
+      to: nextPositions,
+      startedAt: performance.now(),
+    };
+  }, [areas, heroes, worldState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -177,22 +210,29 @@ function WorldCanvas({
       ctx.save();
       ctx.translate(cameraRef.current.x, cameraRef.current.y);
 
-      const actorPositions = resolveHeroPositions(
-        heroesRef.current,
-        areasRef.current,
-        worldStateRef.current,
+      const transition = actorPositionTransitionRef.current;
+      const actorPositions = interpolateActorPositions(
+        transition.from,
+        transition.to,
+        (performance.now() - transition.startedAt)
+          / worldCanvasConfig.actorPositionTransitionDurationMillis,
       );
       // 1. Draw areas
       drawAreas(ctx, areasRef.current);
 
       // 2. Draw heroes
-      drawHeroes(ctx, heroesRef.current, actorPositions);
+      drawHeroes(
+        ctx,
+        heroesRef.current,
+        worldStateRef.current?.actors ?? [],
+        actorPositions,
+      );
       // 3. Draw monsters
       drawMonsters(
         ctx,
         monstersRef.current,
+        worldStateRef.current?.actors ?? [],
         actorPositions,
-        worldStateRef?.current?.encounters,
       );
 
       // 4. Draw floating damages
